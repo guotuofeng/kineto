@@ -77,6 +77,7 @@ else()
   list(APPEND KINETO_COMPILE_OPTIONS "/std:c++14")
   list(APPEND KINETO_COMPILE_OPTIONS "-DWIN32_LEAN_AND_MEAN")
   list(APPEND KINETO_COMPILE_OPTIONS "-DNOGDI")
+  list(APPEND KINETO_COMPILE_OPTIONS "-DNOMINMAX")
 endif()
 if (NOT LIBKINETO_NOCUPTI)
     list(APPEND KINETO_COMPILE_OPTIONS "-DHAS_CUPTI")
@@ -115,16 +116,22 @@ endif()
 
 message(INFO " CUPTI_INCLUDE_DIR = ${CUPTI_INCLUDE_DIR}")
 
-target_include_directories(kineto_base PUBLIC
-      $<BUILD_INTERFACE:${LIBKINETO_INCLUDE_DIR}>
-      $<BUILD_INTERFACE:${LIBKINETO_SOURCE_DIR}>
-      $<BUILD_INTERFACE:${FMT_INCLUDE_DIR}>
-      $<BUILD_INTERFACE:${CUPTI_INCLUDE_DIR}>
-      $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>)
+target_include_directories(kineto_base
+  PUBLIC
+    $<BUILD_INTERFACE:${LIBKINETO_INCLUDE_DIR}>
+  PRIVATE
+    $<BUILD_INTERFACE:${LIBKINETO_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${FMT_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${CUPTI_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>
+)
 
-target_include_directories(kineto_api PUBLIC
-      $<BUILD_INTERFACE:${FMT_INCLUDE_DIR}>
-      $<BUILD_INTERFACE:${LIBKINETO_INCLUDE_DIR}>)
+target_include_directories(kineto_api
+  PUBLIC
+    $<BUILD_INTERFACE:${LIBKINETO_INCLUDE_DIR}>
+  PRIVATE
+    $<BUILD_INTERFACE:${FMT_INCLUDE_DIR}>
+)
 
 if(KINETO_LIBRARY_TYPE STREQUAL "default")
   add_library(kineto
@@ -145,10 +152,9 @@ else()
 endif()
 
 if(NOT LIBKINETO_NOCUPTI)
-  target_link_libraries(kineto "${CUDA_cupti_LIBRARY}")
+  target_link_libraries(kineto PUBLIC "${CUDA_cupti_LIBRARY}")
 endif()
-target_link_libraries(kineto $<BUILD_INTERFACE:fmt::fmt-header-only>)
-add_dependencies(kineto fmt::fmt-header-only)
+target_link_libraries(kineto PRIVATE $<BUILD_INTERFACE:fmt::fmt-header-only>)
 
 install(TARGETS kineto EXPORT kinetoLibraryConfig
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
