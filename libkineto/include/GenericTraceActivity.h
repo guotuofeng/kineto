@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include <fmt/format.h>
 #include <string>
 #include <thread>
 #include <vector>
@@ -69,13 +68,9 @@ class GenericTraceActivity : public TraceActivity {
   void log(ActivityLogger& logger) const override;
 
   //Encode client side metadata as a key/value string.
-  void addMetadata(const std::string& key, const std::string& value) {
-    metadata_.push_back(fmt::format("\"{}\": {}", key, value));
-  }
+  void addMetadata(const std::string& key, const std::string& value);
 
-  const std::string getMetadata() const {
-    return fmt::format("{}", fmt::join(metadata_, ", "));
-  }
+  const std::string getMetadata() const;
 
   virtual ~GenericTraceActivity() {};
 
