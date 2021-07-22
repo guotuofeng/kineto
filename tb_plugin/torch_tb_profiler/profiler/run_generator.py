@@ -9,8 +9,6 @@ from .data import RunProfileData
 from .node import MemoryMetrics
 from .overall_parser import ProfileRole
 
-from .trace import MemoryEvent, DeviceType
-
 from copy import deepcopy
 
 logger = utils.get_logger()
@@ -59,7 +57,7 @@ class RunGenerator(object):
         if self.profile_data.has_memory_data:
             profile_run.views.append(consts.MEMORY_VIEW)
             profile_run.memory_view = self._generate_memory_view()
-            profile_run.memory_curve = self._generate_memory_curve()
+            profile_run.memory_curve = self._get_memory_curve()
 
         profile_run.gpu_infos = {}
         for gpu_id in profile_run.gpu_ids:
@@ -439,39 +437,11 @@ class RunGenerator(object):
             data[name] = table
         return result
 
-    def _generate_memory_curve(self):
-        events = self.profile_data.memory_events
-
-        data = {}
+    def _get_memory_curve(self):
         result = {
             "metadata": {},
-            "data": data
+            "data": self.profile_data.memory_curves
         }
-
-        # E.g.
-        # { "CPU": {
-        #     "ts": [1, 2, 4],
-        #     "total_allocated": [4, 16, 4],
-        #     "total_reserved": [4, 16, 16],
-        #   }, 
-        #   "GPU0": ...
-        # }
-        data["CPU"] = {"ts": [], "total_allocated": [], "total_reserved": []}
-        for i in self.profile_data.gpu_ids:
-            data[f"GPU{i}"] = deepcopy(data["CPU"])
-
-        for e in events:
-            if e.device_type == DeviceType.CPU:
-                data["CPU"]["ts"].append(e.ts)
-                data["CPU"]["total_allocated"].append(e.total_allocated)
-                data["CPU"]["total_reserved"].append(e.total_reserved)
-            elif e.device_type == DeviceType.CUDA:
-                gpuid = f"GPU{e.device_id}"
-                data[gpuid]["ts"].append(e.ts)
-                data[gpuid]["total_allocated"].append(e.total_allocated)
-                data[gpuid]["total_reserved"].append(e.total_reserved)
-            else:
-                raise NotImplementedError("Unknown device type for memory curve")
         return result
 
     @staticmethod
