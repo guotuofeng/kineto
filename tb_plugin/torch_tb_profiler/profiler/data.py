@@ -59,8 +59,8 @@ class RunProfileData(object):
         self.comm_node_list = None
         self.comm_overlap_costs = None
 
-        # Memory stats
         self.memory_stats = None
+        self.memory_trace = None
 
     @property
     def has_memory_data(self):
@@ -199,6 +199,7 @@ class RunProfileData(object):
 
         memory_parser = MemoryParser(module_parser.tid2tree, module_parser.op_list_groupby_name)
         memory_parser.parse_events(self.events)
+        self.memory_events = memory_parser.get_memory_events()
         self.memory_stats = memory_parser.get_memory_statistics()
 
         if self.has_kernel:
