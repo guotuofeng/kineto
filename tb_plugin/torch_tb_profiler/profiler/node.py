@@ -7,7 +7,14 @@ from enum import IntEnum
 
 from .trace import EventTypes
 
-MemoryMetrics = IntEnum('MemoryMetrics', ['SelfIncreaseSize', 'SelfAllocationSize', 'SelfAllocationCount', 'IncreaseSize', 'AllocationSize', 'AllocationCount', 'Total'], start=0)
+class MemoryMetrics(IntEnum):
+    SelfIncreaseSize = 0
+    SelfAllocationSize = 1
+    SelfAllocationCount = 2
+    IncreaseSize = 3
+    AllocationSize = 4
+    AllocationCount = 5
+    Total = 6
 
 class BaseNode(ABC):
     def __init__(self, name, start_time, end_time, type, tid, external_id):
