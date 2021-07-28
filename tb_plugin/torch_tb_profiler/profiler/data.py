@@ -12,7 +12,7 @@ from json.decoder import JSONDecodeError
 
 from .. import io, utils
 from . import trace
-from .trace import BaseEvent
+from .trace import EventTypes, BaseEvent, MemoryEvent
 from .communication import analyze_communication_nodes
 from .event_parser import EventParser, ProfileRole
 from .gpu_metrics_parser import GPUMetricsParser
@@ -64,13 +64,16 @@ class RunProfileData(object):
         self.comm_overlap_costs = None
 
     @staticmethod
-    def parse(run_dir, worker, span, path, caches):
+    def from_file(run_dir, worker, span, path, caches):
         logger.debug("Parse trace, run_dir=%s, worker=%s", run_dir, path)
-
         trace_path, trace_json = RunProfileData._preprocess_file(caches, io.join(run_dir, path))
+        profile = RunProfileData.from_json(worker, span, trace_json)
+        profile.trace_file_path = path
+        return profile
 
+    @staticmethod
+    def from_json(worker, span, trace_json):
         profile = RunProfileData(worker, span)
-        profile.trace_file_path = trace_path
         if type(trace_json) is dict:
             profile.data_schema_version = trace_json.get("schemaVersion", None)
             profile.distributed_info = trace_json.get("distributedInfo", None)
@@ -197,6 +200,8 @@ class RunProfileData(object):
             kernel_parser.parse_events(self.events)
             self.kernel_stat = kernel_parser.kernel_stat
 
+        self.memory_events = self._memory_events()
+
     def analyze(self):
         self.recommendations = []
 
@@ -244,6 +249,11 @@ class RunProfileData(object):
                    "For such case, you may want to evaluate <a href = \"{}\" target=\"_blank\">LAMB optimizer</a>".format(
                        round(communication_ratio * 100, 1), "https://nvidia.github.io/apex/optimizers.html#apex.optimizers.FusedLAMB")
             self.recommendations.append(text)
+
+    def _memory_events(self) -> List[MemoryEvent]:
+        memory_events = [e for e in self.events if e.type == EventTypes.MEMORY]
+        memory_events.sort(key=lambda e: e.ts)
+        return memory_events
 
     def _analyze_gpu_metrics(self):
         def get_gpus_str(gpus):

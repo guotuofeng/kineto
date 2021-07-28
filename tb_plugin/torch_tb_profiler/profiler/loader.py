@@ -89,7 +89,7 @@ class RunLoader(object):
 
         try:
             logger.debug("starting process_data")
-            data = RunProfileData.parse(self.run_dir, worker, span, path, self.caches)
+            data = RunProfileData.from_file(self.run_dir, worker, span, path, self.caches)
             data.process()
             data.analyze()
 
